@@ -1,19 +1,21 @@
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse, FileResponse
+from src.potato_registry.core.deps import get_current_hybrid_user
+from src.potato_registry.core.security import get_user_labels
 from src.potato_registry.core.config import settings
-from src.potato_registry.models import DownloadLog, PackageFile, Package
+from src.potato_registry.models import DownloadLog, PackageFile, Package, User
 
 router = APIRouter(prefix="/simple", tags=["Simple Index (PEP 503)"])
 
 
 @router.get("/", response_class=HTMLResponse)
-async def list_packages():
+async def list_packages(current_user: User = Depends(get_current_hybrid_user)):
     """
     Filtrage simple basé sur les listes JSON.
     """
     # 1. Simuler l'utilisateur courant (À remplacer par l'auth bientôt)
     # Imaginons que l'utilisateur a le rôle "Dev" qui a allowed_labels=["public", "interne"]
-    user_allowed_labels = {"public", "interne"}
+    user_allowed_labels = get_user_labels(current_user)
 
     # 2. Récupérer tous les paquets
     # Note: On récupère juste l'ID, le nom et les labels pour être léger
@@ -45,9 +47,11 @@ async def list_packages():
 
 
 @router.get("/{package_name}/", response_class=HTMLResponse)
-async def package_details(package_name: str, request: Request):
+async def package_details(
+    package_name: str, current_user: User = Depends(get_current_hybrid_user)
+):
     """Liste les versions d'un paquet."""
-    user_allowed_labels = {"public", "interne"}
+    user_allowed_labels = get_user_labels(current_user)
 
     pkg = await Package.get_or_none(name=package_name)
 
@@ -89,6 +93,7 @@ async def get_package_file(
     filename: str,
     background_tasks: BackgroundTasks,
     request: Request,
+    current_user: User = Depends(get_current_hybrid_user),
 ):
     """
     Sert le fichier SI l'utilisateur a le label requis.
@@ -107,7 +112,7 @@ async def get_package_file(
     pkg = pkg_file.version.package
 
     # SÉCURITÉ : Vérification des labels
-    user_labels = {"public", "interne"}
+    user_labels = get_user_labels(current_user)
 
     if set(pkg.labels) and set(pkg.labels).isdisjoint(user_labels):
         # L'utilisateur n'a pas le droit de télécharger ce fichier

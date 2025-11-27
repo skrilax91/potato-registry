@@ -28,10 +28,12 @@ class AppSettings(BaseModel):
     # Valeur par défaut non sécurisée, à surcharger en prod via ENV ou YAML
     secret_key: str = "insecure-default-secret-change-me"
 
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60  # 1 heure par défaut
+
 
 class AuthSettings(BaseModel):
     local_enabled: bool = True
-    local_can_be_disabled: bool = True
 
 
 class OIDCSettings(BaseModel):

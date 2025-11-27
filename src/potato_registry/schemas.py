@@ -96,3 +96,19 @@ class PackageResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TokenGenerateRequest(BaseModel):
+    """Permet à un admin de spécifier l'utilisateur cible."""
+
+    target_username: Optional[str] = None
+
+
+class TokenGenerateResponse(BaseModel):
+    token: str
+    message: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

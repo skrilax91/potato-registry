@@ -1,8 +1,9 @@
 # src/mon_registre/routes/upload.py
 import shutil
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
+from src.potato_registry.core.deps import get_current_hybrid_user
 from src.potato_registry.core.config import settings
-from src.potato_registry.models import Package, PackageVersion, PackageFile
+from src.potato_registry.models import Package, PackageVersion, PackageFile, User
 from tortoise.transactions import in_transaction
 
 router = APIRouter(tags=["Upload Legacy"])
@@ -10,7 +11,10 @@ router = APIRouter(tags=["Upload Legacy"])
 
 @router.post("/")
 async def upload_package(
-    name: str = Form(...), version: str = Form(...), content: UploadFile = File(...)
+    name: str = Form(...),
+    version: str = Form(...),
+    content: UploadFile = File(...),
+    current_user: User = Depends(get_current_hybrid_user),
 ):
     safe_name = name.lower().replace("_", "-")
 
@@ -20,7 +24,7 @@ async def upload_package(
         version_obj, _ = await PackageVersion.get_or_create(
             package=package_obj,
             version=version,
-            defaults={"uploader": None},
+            defaults={"uploader": current_user},
         )
 
         file_exists = await PackageFile.filter(

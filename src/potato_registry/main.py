@@ -3,7 +3,7 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from fastapi import FastAPI
 from .core.config import settings
-from .routes import simple, upload, users, packages, rbac
+from .routes import simple, upload, users, packages, rbac, sso
 from .core.utils import get_app_version
 
 # Configuration
@@ -17,6 +17,8 @@ app.include_router(upload.router)
 app.include_router(users.router)
 app.include_router(packages.router)
 app.include_router(rbac.router)
+if settings.oidc.enabled:
+    app.include_router(sso.router)
 
 register_tortoise(
     app,
