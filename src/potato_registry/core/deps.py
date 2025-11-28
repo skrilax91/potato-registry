@@ -73,6 +73,18 @@ async def get_current_jwt_only_user(
     )
 
 
+async def get_current_admin_jwt_user(
+    jwt_user: User = Depends(get_current_jwt_only_user, use_cache=False),
+) -> User:
+    """Exige que l'utilisateur JWT soit un administrateur."""
+    if not jwt_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès administrateur requis.",
+        )
+    return jwt_user
+
+
 async def get_current_hybrid_user(
     basic_user: User | None = Depends(get_current_pip_user, use_cache=False),
     jwt_user: User | None = Depends(get_current_jwt_user, use_cache=False),

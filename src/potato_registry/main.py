@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.potato_registry.core.initial_data import create_initial_admin_user
 from tortoise.contrib.fastapi import register_tortoise
 
 from fastapi import FastAPI
@@ -29,6 +30,13 @@ register_tortoise(
     generate_schemas=True,  # En DEV uniquement : crée les tables automatiquement
     add_exception_handlers=True,
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialisation des données initiales."""
+
+    await create_initial_admin_user()
 
 
 @app.get("/health")

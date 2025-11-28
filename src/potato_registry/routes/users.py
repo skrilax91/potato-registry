@@ -7,6 +7,7 @@ from tortoise.exceptions import IntegrityError
 
 from src.potato_registry.core.config import settings
 from src.potato_registry.core.deps import (
+    get_current_admin_jwt_user,
     get_current_jwt_only_user,
 )
 from src.potato_registry.models import User
@@ -57,7 +58,9 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 # --- CREATE ---
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def create_user(user_in: UserCreate):
+async def create_user(
+    user_in: UserCreate, _: User = Depends(get_current_admin_jwt_user)
+):
     # Hachage du mot de passe
     hashed_pwd = get_password_hash(user_in.password)
     try:
@@ -78,13 +81,13 @@ async def create_user(user_in: UserCreate):
 
 # --- LIST ---
 @router.get("/", response_model=List[UserResponse])
-async def list_users():
+async def list_users(_: User = Depends(get_current_admin_jwt_user)):
     return await User.all()
 
 
 # --- GET ONE ---
 @router.get("/{user_id}", response_model=UserResponse)
-async def get_user(user_id: int):
+async def get_user(user_id: int, _: User = Depends(get_current_admin_jwt_user)):
     user = await User.get_or_none(id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
@@ -93,7 +96,9 @@ async def get_user(user_id: int):
 
 # --- UPDATE ---
 @router.put("/{user_id}", response_model=UserResponse)
-async def update_user(user_id: int, user_in: UserUpdate):
+async def update_user(
+    user_id: int, user_in: UserUpdate, _: User = Depends(get_current_admin_jwt_user)
+):
     user = await User.get_or_none(id=user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
@@ -114,7 +119,7 @@ async def update_user(user_id: int, user_in: UserUpdate):
 
 # --- DELETE ---
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user_id: int):
+async def delete_user(user_id: int, _: User = Depends(get_current_admin_jwt_user)):
     deleted_count = await User.filter(id=user_id).delete()
     if not deleted_count:
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")

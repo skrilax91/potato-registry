@@ -14,6 +14,21 @@ from pydantic_settings import (
 # ---------------------------------------------------------
 
 
+class AdminSettings(BaseModel):
+    """Configuration de l'utilisateur initial créé au démarrage."""
+
+    # Rendre ces champs optionnels pour ne pas les forcer si non utilisés
+    initial_username: Optional[str] = Field(
+        default="admin",
+    )
+    initial_password: Optional[str] = Field(
+        default="admin123",
+    )
+    initial_email: Optional[str] = Field(
+        default="admin@local.host",
+    )
+
+
 class StorageSettings(BaseModel):
     path: Path = Path("./storage")
 
@@ -30,6 +45,8 @@ class AppSettings(BaseModel):
 
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60  # 1 heure par défaut
+
+    admin: AdminSettings = AdminSettings()
 
 
 class AuthSettings(BaseModel):

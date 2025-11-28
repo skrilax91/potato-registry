@@ -26,13 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Installe uv et toutes les dépendances de production
-RUN pip install uv && \
-    uv sync --system --no-dev
+RUN pip install uv && uv sync --no-dev
 
-# ----------------------------------------------------------------------
-# ÉTAPE 2 : FINAL (Image légère de production)
-# ----------------------------------------------------------------------
-# Utilisation de Python 3.14 pour l'exécution
+
 FROM python:3.14-slim AS final
 
 WORKDIR /app
@@ -40,7 +36,6 @@ WORKDIR /app
 # Copie du code source
 COPY src/ /app/src/
 
-# Copie des dépendances installées (Mise à jour du chemin)
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 

@@ -12,12 +12,18 @@ from src.potato_registry.schemas import (
 )
 from src.potato_registry.core.config import settings
 import shutil
+from fastapi.params import Depends
+from src.potato_registry.core.deps import (
+    get_current_admin_jwt_user,
+    get_current_jwt_only_user,
+)
+from src.potato_registry.models import User
 
 router = APIRouter(prefix="/api/packages", tags=["Packages Management (Admin)"])
 
 
 @router.get("/", response_model=List[PackageResponse])
-async def list_packages():
+async def list_packages(_: User = Depends(get_current_jwt_only_user)):
     """Liste tous les paquets avec leurs versions et les auteurs."""
     versions_query = (
         await PackageVersion.all()
@@ -61,7 +67,7 @@ async def list_packages():
 
 
 @router.get("/{name}", response_model=PackageResponse)
-async def get_package(name: str):
+async def get_package(name: str, _: User = Depends(get_current_jwt_only_user)):
     """Récupère les détails d'un paquet spécifique."""
     versions = (
         await PackageVersion.filter(package__name=name)
@@ -102,7 +108,7 @@ async def get_package(name: str):
 
 
 @router.delete("/{name}")
-async def delete_package(name: str):
+async def delete_package(name: str, _: User = Depends(get_current_admin_jwt_user)):
     """
     Supprime un paquet de la DB ET du disque dur.
     """
