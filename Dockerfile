@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Installe uv et toutes les dépendances de production
-RUN pip install uv && uv sync --no-dev
+RUN pip install uv uvicorn && uv sync --no-dev
 
 
 FROM python:3.14-slim AS final
@@ -36,7 +36,7 @@ WORKDIR /app
 # Copie du code source
 COPY src/ /app/src/
 
-COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /app/.venv/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 
 # Création du dossier de stockage persistant
@@ -45,4 +45,4 @@ RUN mkdir -p storage
 EXPOSE 8000
 
 # Commande de démarrage (uvicorn)
-CMD ["uvicorn", "src.potato_registry.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "src.potato_registry.main:app", "--host", "0.0.0.0", "--port", "8000"]
